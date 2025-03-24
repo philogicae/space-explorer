@@ -20,11 +20,10 @@ export const createTurboHandler = (turboIntervalRef: React.MutableRefObject<numb
       window.dispatchEvent(downEvent);
     }
 
-    turboIntervalRef.current = window.setInterval(() => {
-      if (shipControlsWindow.shipControls) {
-        shipControlsWindow.shipControls.activateTurbo();
-      }
-    }, 100);
+    // Use setTurbo instead of activateTurbo for direct state control
+    if (shipControlsWindow.shipControls) {
+      shipControlsWindow.shipControls.setTurbo(true);
+    }
   };
 
   const handleTurboStop = () => {
@@ -36,7 +35,11 @@ export const createTurboHandler = (turboIntervalRef: React.MutableRefObject<numb
     const shipControlsWindow = window as Window & typeof globalThis & {
       shipControls?: ShipControlsInterface;
     };
-    if (!shipControlsWindow.shipControls) {
+    
+    // Set turbo state to false on stop
+    if (shipControlsWindow.shipControls) {
+      shipControlsWindow.shipControls.setTurbo(false);
+    } else {
       const upEvent = new KeyboardEvent('keyup', {
         key: 'q',
         bubbles: true,
@@ -69,11 +72,10 @@ export const createBrakeHandler = (brakeIntervalRef: React.MutableRefObject<numb
       window.dispatchEvent(downEvent);
     }
 
-    brakeIntervalRef.current = window.setInterval(() => {
-      if (shipControlsWindow.shipControls) {
-        shipControlsWindow.shipControls.activateBrake();
-      }
-    }, 100);
+    // Use setBrake instead of activateBrake for direct state control
+    if (shipControlsWindow.shipControls) {
+      shipControlsWindow.shipControls.setBrake(true);
+    }
   };
 
   const handleBrakeStop = () => {
@@ -85,7 +87,11 @@ export const createBrakeHandler = (brakeIntervalRef: React.MutableRefObject<numb
     const shipControlsWindow = window as Window & typeof globalThis & {
       shipControls?: ShipControlsInterface;
     };
-    if (!shipControlsWindow.shipControls) {
+    
+    // Set brake state to false on stop
+    if (shipControlsWindow.shipControls) {
+      shipControlsWindow.shipControls.setBrake(false);
+    } else {
       const upEvent = new KeyboardEvent('keyup', {
         key: 'e',
         bubbles: true,

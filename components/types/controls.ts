@@ -15,6 +15,9 @@ export interface ShipControlsInterface {
 	pitchDown: (active: boolean) => void
 	activateTurbo: () => void
 	activateBrake: () => void
+	// New continuous state methods for Q and E keys
+	setTurbo: (active: boolean) => void
+	setBrake: (active: boolean) => void
 	updateShipJoystick: (x: number, y: number) => void
 }
 

@@ -5,6 +5,7 @@ import type { ForwardedRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Vector3, CylinderGeometry, ConeGeometry, SphereGeometry, MeshStandardMaterial, MeshBasicMaterial } from 'three'
 import type { Group } from 'three'
+import type { ShipControlsInterface } from '../types/controls'
 
 interface SpaceshipProps {
 	initialPosition?: [number, number, number]
@@ -45,6 +46,8 @@ const Spaceship = forwardRef(
 			right: false,
 			pitchUp: false,
 			pitchDown: false,
+			turbo: false,
+			brake: false,
 		})
 
 		const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -130,10 +133,22 @@ const Spaceship = forwardRef(
 
 			const cappedDelta = Math.min(delta, 0.05)
 
-			const acceleration = 10 * cappedDelta
-			const maxSpeed = 1000
+			// Base movement parameters
+			let acceleration = 10 * cappedDelta
+			let maxSpeed = 1000
 			const rotAcceleration = 0.5 * cappedDelta
 			const maxRotSpeed = 5
+
+			// Apply turbo/brake effects
+			if (keys.turbo && !keys.brake) {
+				// Turbo increases acceleration and max speed
+				acceleration *= 2.0
+				maxSpeed *= 1.5
+			} else if (keys.brake && !keys.turbo) {
+				// Brake decreases acceleration and max speed - inverse of turbo
+				acceleration *= 0.5
+				maxSpeed *= 0.66
+			}
 
 			setThrustersActive({
 				forward: keys.forward,
@@ -196,6 +211,32 @@ const Spaceship = forwardRef(
 		useEffect(() => {
 			if (ref && typeof ref === 'object' && shipRef.current) {
 				ref.current = shipRef.current
+			}
+
+			// Register ship controls interface globally
+			const shipControlsWindow = window as Window & typeof globalThis & {
+				shipControls?: ShipControlsInterface
+			}
+
+			if (shipControlsWindow.shipControls) {
+				// Override the setTurbo and setBrake methods to update our local state
+				const originalSetTurbo = shipControlsWindow.shipControls.setTurbo
+				shipControlsWindow.shipControls.setTurbo = (active: boolean) => {
+					// Call the original implementation
+					originalSetTurbo(active)
+
+					// Update our local state
+					setKeys(prev => ({ ...prev, turbo: active }))
+				}
+
+				const originalSetBrake = shipControlsWindow.shipControls.setBrake
+				shipControlsWindow.shipControls.setBrake = (active: boolean) => {
+					// Call the original implementation
+					originalSetBrake(active)
+
+					// Update our local state
+					setKeys(prev => ({ ...prev, brake: active }))
+				}
 			}
 		}, [ref])
 

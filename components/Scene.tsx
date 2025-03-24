@@ -30,18 +30,9 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 	const turboIntervalRef = useRef<number | null>(null)
 	const brakeIntervalRef = useRef<number | null>(null)
 
-	// Use the extracted control handlers from ShipControls.ts
-	const { handleTurboStart, handleTurboStop } = useCallback(
-		() => createTurboHandler(turboIntervalRef),
-		[]
-	)()
+	useCallback(() => createTurboHandler(turboIntervalRef), [])()
+	useCallback(() => createBrakeHandler(brakeIntervalRef), [])()
 
-	const { handleBrakeStart, handleBrakeStop } = useCallback(
-		() => createBrakeHandler(brakeIntervalRef),
-		[]
-	)()
-
-	// Use the extracted joystick position updater from JoystickUtils.ts
 	const updateJoystickPosition = useCallback(
 		(x: number, y: number, joystickElement: HTMLElement) => {
 			createJoystickPositionUpdater(joystickKnobRef)(x, y, joystickElement)
@@ -49,7 +40,6 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 		[]
 	)
 
-	// Use the extracted ship joystick position updater from JoystickUtils.ts
 	const updateShipJoystickPosition = useCallback(
 		(x: number, y: number, joystickElement: HTMLElement) => {
 			createShipJoystickPositionUpdater(shipJoystickKnobRef)(
@@ -61,25 +51,27 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 		[]
 	)
 
+	const keysPressed = useRef<Record<string, boolean>>({}).current
+
 	useEffect(() => {
 		if (!gameStarted || !window) return
 
 		const shipKeyStep = 15
-		const keysPressed: Record<string, boolean> = {}
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (['w', 'a', 's', 'd', 'q', 'e'].includes(e.key.toLowerCase())) {
 				keysPressed[e.key.toLowerCase()] = true
+				e.preventDefault()
 			}
 		}
 
 		const handleKeyUp = (e: KeyboardEvent) => {
 			if (['w', 'a', 's', 'd', 'q', 'e'].includes(e.key.toLowerCase())) {
 				keysPressed[e.key.toLowerCase()] = false
+				e.preventDefault()
 			}
 		}
 
-		// Process key states and update ship joystick visually
 		const updateShipJoystickVisual = () => {
 			let x = 0
 			let y = 0
@@ -89,22 +81,22 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 			if (keysPressed.w) y -= shipKeyStep
 			if (keysPressed.s) y += shipKeyStep
 
-			if (keysPressed.q && window) {
-				const shipControlsWindow = window as Window &
-					typeof globalThis & {
-						shipControls?: ShipControlsInterface
-					}
-				if (shipControlsWindow.shipControls) {
-					shipControlsWindow.shipControls.activateTurbo()
+			const shipControlsWindow = window as Window &
+				typeof globalThis & {
+					shipControls?: ShipControlsInterface
 				}
-			}
-			if (keysPressed.e && window) {
-				const shipControlsWindow = window as Window &
-					typeof globalThis & {
-						shipControls?: ShipControlsInterface
-					}
-				if (shipControlsWindow.shipControls) {
-					shipControlsWindow.shipControls.activateBrake()
+
+			if (shipControlsWindow.shipControls) {
+				if (keysPressed.q) {
+					shipControlsWindow.shipControls.setTurbo(true)
+				} else {
+					shipControlsWindow.shipControls.setTurbo(false)
+				}
+
+				if (keysPressed.e) {
+					shipControlsWindow.shipControls.setBrake(true)
+				} else {
+					shipControlsWindow.shipControls.setBrake(false)
 				}
 			}
 
@@ -134,9 +126,8 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 			window.removeEventListener('keyup', handleKeyUp)
 			cancelAnimationFrame(animationId)
 		}
-	}, [gameStarted, updateShipJoystickPosition])
+	}, [gameStarted, updateShipJoystickPosition, keysPressed])
 
-	// Ship controls setup
 	useEffect(() => {
 		if (!gameStarted || !window) return
 
@@ -144,13 +135,13 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 			moveForward: (active: boolean) => {
 				const event = new KeyboardEvent(active ? 'keydown' : 'keyup', {
 					key: 'w',
-				}) // Forward should be W
+				})
 				window.dispatchEvent(event)
 			},
 			moveBackward: (active: boolean) => {
 				const event = new KeyboardEvent(active ? 'keydown' : 'keyup', {
 					key: 's',
-				}) // Backward should be S
+				})
 				window.dispatchEvent(event)
 			},
 			turnLeft: (active: boolean) => {
@@ -178,41 +169,22 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 				window.dispatchEvent(event)
 			},
 			activateTurbo: () => {
-				// Dispatch both keydown and keyup with bubbles and cancelable properties set to true for better event propagation
-				const downEvent = new KeyboardEvent('keydown', {
-					key: 'q', // Use Q for Turbo
-					bubbles: true,
-					cancelable: true,
-				})
-				window.dispatchEvent(downEvent)
-				setTimeout(() => {
-					const upEvent = new KeyboardEvent('keyup', {
-						key: 'q', // Use Q for Turbo
-						bubbles: true,
-						cancelable: true,
-					})
-					window.dispatchEvent(upEvent)
-				}, 200)
+				controls.setTurbo(true)
+				setTimeout(() => controls.setTurbo(false), 200)
 			},
 			activateBrake: () => {
-				// Dispatch both keydown and keyup with bubbles and cancelable properties set to true for better event propagation
-				const downEvent = new KeyboardEvent('keydown', {
-					key: 'e', // Use E for Brake
-					bubbles: true,
-					cancelable: true,
-				})
-				window.dispatchEvent(downEvent)
-				setTimeout(() => {
-					const upEvent = new KeyboardEvent('keyup', {
-						key: 'e', // Use E for Brake
-						bubbles: true,
-						cancelable: true,
-					})
-					window.dispatchEvent(upEvent)
-				}, 200)
+				controls.setBrake(true)
+				setTimeout(() => controls.setBrake(false), 200)
+			},
+			setTurbo: (active: boolean) => {
+				const turboScale = active ? 2.0 : 1.0
+				console.log(`Turbo ${active ? 'activated' : 'deactivated'}, scale: ${turboScale}`)
+			},
+			setBrake: (active: boolean) => {
+				const brakeScale = active ? 0.5 : 1.0
+				console.log(`Brake ${active ? 'activated' : 'deactivated'}, scale: ${brakeScale}`)
 			},
 			updateShipJoystick: (x: number, y: number) => {
-				// Map joystick x,y to WASD controls
 				const threshold = 0.1
 
 				controls.pitchUp(y < -threshold)
@@ -221,20 +193,10 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 				controls.turnRight(x > threshold)
 			},
 		}
-		;(
-			window as Window &
-				typeof globalThis & {
-					shipControls?: ShipControlsInterface
-				}
-		).shipControls = controls
+		;(window as Window & typeof globalThis & { shipControls?: ShipControlsInterface }).shipControls = controls
 
 		return () => {
-			;(
-				window as Window &
-					typeof globalThis & {
-						shipControls?: ShipControlsInterface
-					}
-			).shipControls = undefined
+			;(window as Window & typeof globalThis & { shipControls?: ShipControlsInterface }).shipControls = undefined
 		}
 	}, [gameStarted])
 
@@ -246,15 +208,17 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-				keysPressed[e.key] = true
 				e.preventDefault()
+				e.stopPropagation()
+				keysPressed[e.key] = true
 			}
 		}
 
 		const handleKeyUp = (e: KeyboardEvent) => {
 			if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-				keysPressed[e.key] = false
 				e.preventDefault()
+				e.stopPropagation()
+				keysPressed[e.key] = false
 			}
 		}
 
@@ -268,7 +232,6 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 			if (keysPressed.ArrowDown) y += arrowKeyStep
 
 			if (x !== 0 || y !== 0) {
-				// Get the joystick container element to use with our helper function
 				if (joystickKnobRef.current?.parentElement) {
 					updateJoystickPosition(x, y, joystickKnobRef.current.parentElement)
 				}
@@ -292,7 +255,6 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 		}
 	}, [gameStarted, updateJoystickPosition])
 
-	// Conditional rendering based on game state
 	if (!gameStarted) {
 		return (
 			<div
@@ -339,50 +301,84 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 		>
 			<ShipStatsDisplay />
 
-			{/* Ship Control UI */}
 			{gameStarted && (
 				<div className='flex absolute bottom-6 left-6 z-10 flex-col gap-4 items-center'>
-					{/* Turbo and Brake Buttons */}
 					<div className='flex gap-3'>
 						<button
 							type='button'
 							className='flex justify-center items-center w-14 h-14 font-bold text-white rounded-md shadow-lg transition-all text-md bg-green-600/90 hover:bg-green-500/90'
-							onMouseDown={handleTurboStart}
-							onMouseUp={handleTurboStop}
-							onMouseLeave={handleTurboStop}
-							onClick={() => {
-								// Keep the onClick for compatibility
-								// No-op since we're handling with mouse events
+							onMouseDown={() => {
+								const event = new KeyboardEvent('keydown', { key: 'q' })
+								window.dispatchEvent(event)
+								keysPressed.q = true
 							}}
-							onTouchStart={handleTurboStart}
-							onTouchEnd={handleTurboStop}
+							onMouseUp={() => {
+								const event = new KeyboardEvent('keyup', { key: 'q' })
+								window.dispatchEvent(event)
+								keysPressed.q = false
+							}}
+							onMouseLeave={() => {
+								const event = new KeyboardEvent('keyup', { key: 'q' })
+								window.dispatchEvent(event)
+								keysPressed.q = false
+							}}
+							onTouchStart={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								const event = new KeyboardEvent('keydown', { key: 'q' })
+								window.dispatchEvent(event)
+								keysPressed.q = true
+							}}
+							onTouchEnd={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								const event = new KeyboardEvent('keyup', { key: 'q' })
+								window.dispatchEvent(event)
+								keysPressed.q = false
+							}}
 						>
 							Turbo (Q)
 						</button>
 						<button
 							type='button'
 							className='flex justify-center items-center w-14 h-14 font-bold text-white rounded-md shadow-lg transition-all text-md bg-red-600/90 hover:bg-red-500/90'
-							onMouseDown={handleBrakeStart}
-							onMouseUp={handleBrakeStop}
-							onMouseLeave={handleBrakeStop}
-							onClick={() => {
-								// Keep the onClick for compatibility
-								// No-op since we're handling with mouse events
+							onMouseDown={() => {
+								const event = new KeyboardEvent('keydown', { key: 'e' })
+								window.dispatchEvent(event)
+								keysPressed.e = true
 							}}
-							onTouchStart={handleBrakeStart}
-							onTouchEnd={handleBrakeStop}
+							onMouseUp={() => {
+								const event = new KeyboardEvent('keyup', { key: 'e' })
+								window.dispatchEvent(event)
+								keysPressed.e = false
+							}}
+							onMouseLeave={() => {
+								const event = new KeyboardEvent('keyup', { key: 'e' })
+								window.dispatchEvent(event)
+								keysPressed.e = false
+							}}
+							onTouchStart={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								const event = new KeyboardEvent('keydown', { key: 'e' })
+								window.dispatchEvent(event)
+								keysPressed.e = true
+							}}
+							onTouchEnd={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								const event = new KeyboardEvent('keyup', { key: 'e' })
+								window.dispatchEvent(event)
+								keysPressed.e = false
+							}}
 						>
 							Brake (E)
 						</button>
 					</div>
 
-					{/* Ship Joystick Control */}
 					<div
 						className='relative w-36 h-36 rounded-full border shadow-lg bg-gray-800/80 border-gray-700/50'
 						onMouseDown={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
-
 							const joystickElement = e.currentTarget
 							const rect = joystickElement.getBoundingClientRect()
 							const centerX = rect.width / 2
@@ -397,22 +393,17 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 
 							updateShipJoystickPosition(rawX, rawY, joystickElement)
 
-							// Handle mouse movement while button is held down
 							const handleMouseMove = (moveEvent: MouseEvent) => {
 								moveEvent.preventDefault()
 								moveEvent.stopPropagation()
 
-								// Get current position relative to the joystick center
-								// We use the original rect because the joystick element hasn't moved
 								const x = moveEvent.clientX - rect.left - centerX
 								const y = moveEvent.clientY - rect.top - centerY
 
-								// Make sure there's no transition for direct control
 								if (shipJoystickKnobRef.current) {
 									shipJoystickKnobRef.current.style.transition = 'none'
 								}
 
-								// Update joystick visual position and ship controls
 								updateShipJoystickPosition(x, y, joystickElement)
 							}
 
@@ -457,55 +448,64 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 
 							if (e.touches.length > 0) {
 								const touch = e.touches[0]
+								const touchId = touch.identifier
 								const x = touch.clientX - rect.left - centerX
 								const y = touch.clientY - rect.top - centerY
 
 								updateShipJoystickPosition(x, y, joystickElement)
-							}
 
-							const handleTouchMove = (moveEvent: TouchEvent) => {
-								moveEvent.preventDefault()
+								const handleTouchMove = (moveEvent: TouchEvent) => {
+									moveEvent.preventDefault()
 
-								if (moveEvent.touches.length === 0) return
+									const touchIndex = Array.from(moveEvent.touches).findIndex(
+										(t) => t.identifier === touchId
+									)
 
-								const touch = moveEvent.touches[0]
-								const x = touch.clientX - rect.left - centerX
-								const y = touch.clientY - rect.top - centerY
+									if (touchIndex === -1) return
 
-								updateShipJoystickPosition(x, y, joystickElement)
-							}
+									const currentTouch = moveEvent.touches[touchIndex]
+									const x = currentTouch.clientX - rect.left - centerX
+									const y = currentTouch.clientY - rect.top - centerY
 
-							const handleTouchEnd = () => {
-								if (shipJoystickKnobRef.current) {
-									shipJoystickKnobRef.current.style.transform =
-										'translate3d(0px, 0px, 0) rotateX(0deg) rotateY(0deg)'
+									updateShipJoystickPosition(x, y, joystickElement)
 								}
 
-								const shipControls = (
-									window as Window &
-										typeof globalThis & { shipControls?: ShipControlsInterface }
-								).shipControls
-								if (shipControls) {
-									shipControls.pitchUp(false)
-									shipControls.pitchDown(false)
-									shipControls.turnLeft(false)
-									shipControls.turnRight(false)
+								const handleTouchEnd = (endEvent: TouchEvent) => {
+									const touchIndex = Array.from(endEvent.changedTouches).findIndex(
+										(t) => t.identifier === touchId
+									)
 
-									shipControls.updateShipJoystick(0, 0)
+									if (touchIndex === -1) return
+
+									if (shipJoystickKnobRef.current) {
+										shipJoystickKnobRef.current.style.transform =
+											'translate3d(0px, 0px, 0) rotateX(0deg) rotateY(0deg)'
+									}
+
+									const shipControls = (
+										window as Window &
+											typeof globalThis & { shipControls?: ShipControlsInterface }
+									).shipControls
+									if (shipControls) {
+										shipControls.pitchUp(false)
+										shipControls.pitchDown(false)
+										shipControls.turnLeft(false)
+										shipControls.turnRight(false)
+
+										shipControls.updateShipJoystick(0, 0)
+									}
+
+									document.removeEventListener('touchmove', handleTouchMove)
+									document.removeEventListener('touchend', handleTouchEnd)
 								}
 
-								document.removeEventListener('touchmove', handleTouchMove)
-								document.removeEventListener('touchend', handleTouchEnd)
+								document.addEventListener('touchmove', handleTouchMove, {
+									passive: false,
+								})
+								document.addEventListener('touchend', handleTouchEnd)
 							}
-
-							// Add event listeners
-							document.addEventListener('touchmove', handleTouchMove, {
-								passive: false,
-							})
-							document.addEventListener('touchend', handleTouchEnd)
 						}}
 					>
-						{/* WASD Labels */}
 						<div className='absolute top-2 left-1/2 font-bold text-white transform -translate-x-1/2'>
 							W
 						</div>
@@ -519,14 +519,12 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 							D
 						</div>
 
-						{/* Joystick Crosshair */}
 						<div className='flex absolute inset-0 justify-center items-center pointer-events-none'>
 							<div className='w-1/2 h-1/2 rounded-full border-2 border-gray-600/50' />
 							<div className='absolute w-full h-px bg-gray-600/30' />
 							<div className='absolute w-px h-full bg-gray-600/30' />
 						</div>
 
-						{/* Joystick Knob */}
 						<div
 							ref={shipJoystickKnobRef}
 							className='absolute top-1/2 left-1/2 -mt-7 -ml-7 w-14 h-14 bg-red-500 rounded-full shadow-lg transition-all duration-75 ease-out joystick-knob'
@@ -539,10 +537,8 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 				</div>
 			)}
 
-			{/* Camera Control UI */}
 			{gameStarted && (
 				<div className='flex absolute right-6 bottom-6 z-10 flex-col gap-4 items-center'>
-					{/* Zoom Controls */}
 					<div className='flex gap-3'>
 						<button
 							type='button'
@@ -574,7 +570,6 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 						</button>
 					</div>
 
-					{/* Joystick Control */}
 					<div
 						className='relative w-36 h-36 rounded-full border shadow-lg bg-gray-800/80 border-gray-700/50'
 						onMouseDown={(e) => {
@@ -591,7 +586,6 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 
 							updateJoystickPosition(x, y, joystickElement)
 
-							// Handle mouse movement while button is held down
 							const handleMouseMove = (moveEvent: MouseEvent) => {
 								const x = moveEvent.clientX - rect.left - centerX
 								const y = moveEvent.clientY - rect.top - centerY
@@ -619,42 +613,51 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 
 							if (e.touches.length > 0) {
 								const touch = e.touches[0]
+								const touchId = touch.identifier
 								const x = touch.clientX - rect.left - centerX
 								const y = touch.clientY - rect.top - centerY
 
 								updateJoystickPosition(x, y, joystickElement)
-							}
 
-							const handleTouchMove = (moveEvent: TouchEvent) => {
-								moveEvent.preventDefault()
+								const handleTouchMove = (moveEvent: TouchEvent) => {
+									moveEvent.preventDefault()
 
-								if (moveEvent.touches.length === 0) return
+									const touchIndex = Array.from(moveEvent.touches).findIndex(
+										(t) => t.identifier === touchId
+									)
 
-								const touch = moveEvent.touches[0]
-								const x = touch.clientX - rect.left - centerX
-								const y = touch.clientY - rect.top - centerY
+									if (touchIndex === -1) return
 
-								updateJoystickPosition(x, y, joystickElement)
-							}
+									const currentTouch = moveEvent.touches[touchIndex]
+									const x = currentTouch.clientX - rect.left - centerX
+									const y = currentTouch.clientY - rect.top - centerY
 
-							const handleTouchEnd = () => {
-								if (joystickKnobRef.current) {
-									joystickKnobRef.current.style.transform =
-										'translate3d(0px, 0px, 0) rotateX(0deg) rotateY(0deg)'
+									updateJoystickPosition(x, y, joystickElement)
 								}
 
-								document.removeEventListener('touchmove', handleTouchMove)
-								document.removeEventListener('touchend', handleTouchEnd)
-							}
+								const handleTouchEnd = (endEvent: TouchEvent) => {
+									const touchIndex = Array.from(endEvent.changedTouches).findIndex(
+										(t) => t.identifier === touchId
+									)
 
-							// Add event listeners
-							document.addEventListener('touchmove', handleTouchMove, {
-								passive: false,
-							})
-							document.addEventListener('touchend', handleTouchEnd)
+									if (touchIndex === -1) return
+
+									if (joystickKnobRef.current) {
+										joystickKnobRef.current.style.transform =
+											'translate3d(0px, 0px, 0) rotateX(0deg) rotateY(0deg)'
+									}
+
+									document.removeEventListener('touchmove', handleTouchMove)
+									document.removeEventListener('touchend', handleTouchEnd)
+								}
+
+								document.addEventListener('touchmove', handleTouchMove, {
+									passive: false,
+								})
+								document.addEventListener('touchend', handleTouchEnd)
+							}
 						}}
 					>
-						{/* Arrow Labels */}
 						<div className='absolute top-2 left-1/2 font-bold text-white transform -translate-x-1/2'>
 							↑
 						</div>
@@ -668,14 +671,12 @@ export default function Scene({ gameStarted, onStartGame }: SceneProps) {
 							→
 						</div>
 
-						{/* Joystick Crosshair */}
 						<div className='flex absolute inset-0 justify-center items-center pointer-events-none'>
 							<div className='w-1/2 h-1/2 rounded-full border-2 border-gray-600/50' />
 							<div className='absolute w-full h-px bg-gray-600/30' />
 							<div className='absolute w-px h-full bg-gray-600/30' />
 						</div>
 
-						{/* Joystick Knob */}
 						<div
 							ref={joystickKnobRef}
 							className='absolute top-1/2 left-1/2 -mt-7 -ml-7 w-14 h-14 bg-blue-500 rounded-full shadow-lg transition-all duration-75 ease-out joystick-knob'
