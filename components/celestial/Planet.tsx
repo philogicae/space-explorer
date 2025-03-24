@@ -9,6 +9,7 @@ import type { Group } from 'three'
 import PlanetRings from './PlanetRings'
 import Moon from './Moon'
 import OrbitLine from './OrbitLine'
+
 const Planet = ({ 
   orbitalRadius, 
   orbitalSpeed, 
@@ -40,13 +41,11 @@ const Planet = ({
   const planetRef = useRef<Group>(null)
   const [position] = useState(new Vector3(orbitalRadius, 0, 0))
   const [showLabel, setShowLabel] = useState(false)
-  
 
   const inclinationRad = useMemo(
     () => (orbitalInclination * Math.PI) / 180,
     [orbitalInclination]
   )
-
 
   const planetMaterial = useMemo(
     () => new MeshPhysicalMaterial({
@@ -66,21 +65,17 @@ const Planet = ({
     if (planetRef.current) {
       const angle = clock.getElapsedTime() * orbitalSpeed + orbitalOffset
       
-
       const x = Math.cos(angle) * orbitalRadius
       const flatZ = Math.sin(angle) * orbitalRadius
       
-
       const y = flatZ * Math.sin(inclinationRad)
       const z = flatZ * Math.cos(inclinationRad)
       
-
       planetRef.current.position.x = x
       planetRef.current.position.y = y
       planetRef.current.position.z = z
       position.set(x, y, z)
       
-
       planetRef.current.rotation.y += 0.005 / (size * 0.5)
     }
   })
@@ -93,12 +88,9 @@ const Planet = ({
         onPointerOut={() => setShowLabel(false)}
       >
         <mesh>
-
           <sphereGeometry args={[size * 10, Math.max(24, Math.min(128, Math.floor(32 * size))), Math.max(24, Math.min(128, Math.floor(32 * size)))]} />
-
           <primitive object={planetMaterial} />
         </mesh>
-        
 
         <pointLight
           color={color}
@@ -125,7 +117,6 @@ const Planet = ({
           </Text>
         )}
       </group>
-      
 
       {useMemo(() => moons.map((moon, index) => {
         const moonInclination = moon.orbitalInclination || (index * 3.5) % 20;
@@ -133,7 +124,6 @@ const Planet = ({
         
         return (
           <group key={`orbit-${moonId}`} position={[position.x, position.y, position.z]}>
-
             <OrbitLine 
               radius={moon.orbitalRadius} 
               color={moon.color} 
@@ -142,8 +132,6 @@ const Planet = ({
               inclination={moonInclination}
               segments={32}
             />
-            
-
             <Moon 
               key={moonId}
               planetPosition={position}

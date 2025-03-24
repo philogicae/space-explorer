@@ -6,8 +6,6 @@ import { useFrame } from '@react-three/fiber'
 import { Vector3, CylinderGeometry, ConeGeometry, SphereGeometry, MeshStandardMaterial, MeshBasicMaterial } from 'three'
 import type { Group } from 'three'
 
-
-
 interface SpaceshipProps {
 	initialPosition?: [number, number, number]
 }
@@ -19,7 +17,6 @@ const Spaceship = forwardRef(
 	) => {
 		const shipRef = useRef<Group>(null)
 
-
 		useEffect(() => {
 			if (shipRef.current) {
 				shipRef.current.position.set(
@@ -28,20 +25,15 @@ const Spaceship = forwardRef(
 					initialPosition[2]
 				)
 
-
 				const direction = new Vector3(
 					-initialPosition[0],
 					-initialPosition[1],
 					-initialPosition[2]
 				).normalize()
 
-
 				const angleY = Math.atan2(direction.x, direction.z)
 
-
 				shipRef.current.rotation.set(0, angleY + Math.PI, 0)
-
-
 			}
 		}, [initialPosition])
 
@@ -55,11 +47,9 @@ const Spaceship = forwardRef(
 			pitchDown: false,
 		})
 
-
 		const handleKeyDown = useCallback((e: KeyboardEvent) => {
 			const key = e.key.toLowerCase()
 			setKeys(prev => {
-
 				if (
 					(key === 'q' && !prev.forward) ||
 					(key === 'e' && !prev.backward) ||
@@ -88,7 +78,6 @@ const Spaceship = forwardRef(
 		const handleKeyUp = useCallback((e: KeyboardEvent) => {
 			const key = e.key.toLowerCase()
 			setKeys(prev => {
-
 				if (
 					(key === 'q' && prev.forward) ||
 					(key === 'e' && prev.backward) ||
@@ -113,10 +102,8 @@ const Spaceship = forwardRef(
 				return prev
 			})
 		}, [])
-		
 
 		useEffect(() => {
-
 			window.addEventListener('keydown', handleKeyDown)
 			window.addEventListener('keyup', handleKeyUp)
 
@@ -131,35 +118,27 @@ const Spaceship = forwardRef(
 		const rotationVelocity = useRef(0)
 		const pitchVelocity = useRef(0)
 		
-
 		const directionVector = useMemo(() => new Vector3(), [])
-
 
 		const [thrustersActive, setThrustersActive] = useState({
 			forward: false,
 			backward: false,
 		})
 
-
 		useFrame((_, delta) => {
 			if (!shipRef.current) return
 
-
 			const cappedDelta = Math.min(delta, 0.05)
-
 
 			const acceleration = 10 * cappedDelta
 			const maxSpeed = 1000
 			const rotAcceleration = 0.5 * cappedDelta
 			const maxRotSpeed = 5
 
-
-
 			setThrustersActive({
 				forward: keys.forward,
 				backward: keys.backward,
 			})
-
 
 			if (keys.forward) {
 				directionVector.set(0, 0, -1).applyQuaternion(
@@ -173,7 +152,6 @@ const Spaceship = forwardRef(
 				)
 				velocity.current.addScaledVector(directionVector, acceleration)
 			}
-
 
 			if (keys.left) {
 				rotationVelocity.current += rotAcceleration
@@ -189,13 +167,9 @@ const Spaceship = forwardRef(
 				pitchVelocity.current -= rotAcceleration
 			}
 
-
 			if (velocity.current.length() > maxSpeed) {
 				velocity.current.normalize().multiplyScalar(maxSpeed)
 			}
-
-
-
 
 			rotationVelocity.current = Math.max(
 				-maxRotSpeed,
@@ -206,10 +180,8 @@ const Spaceship = forwardRef(
 				Math.min(maxRotSpeed, pitchVelocity.current)
 			)
 
-
 			directionVector.copy(velocity.current).multiplyScalar(cappedDelta)
 			shipRef.current.position.add(directionVector)
-
 
 			if (Math.abs(rotationVelocity.current) > 0.001) {
 				shipRef.current.rotateY(rotationVelocity.current * cappedDelta)
@@ -226,7 +198,6 @@ const Spaceship = forwardRef(
 				ref.current = shipRef.current
 			}
 		}, [ref])
-
 
 		const shipGeometries = useMemo(() => ({
 			body: new CylinderGeometry(1, 1, 5, 16),
@@ -253,15 +224,11 @@ const Spaceship = forwardRef(
 		return (
 			<group ref={shipRef} name='shipRef'>
 				<group>
-
 					<mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={shipGeometries.body} material={shipMaterials.body} />
-
 
 					<mesh position={[0, 0, -3]} rotation={[-Math.PI / 2, 0, 0]} geometry={shipGeometries.noseCone} material={shipMaterials.noseCone} />
 
-
 					<mesh position={[0, 0, 2.5]} rotation={[-Math.PI / 2, 0, 0]} geometry={shipGeometries.engine} material={shipMaterials.engine} />
-
 
 					{thrustersActive.backward && (
 						<group>
@@ -290,7 +257,6 @@ const Spaceship = forwardRef(
 						/>
 					)}
 
-
 					{thrustersActive.forward && (
 						<pointLight
 							position={[0, 0, 4]}
@@ -299,7 +265,6 @@ const Spaceship = forwardRef(
 							color='orange'
 						/>
 					)}
-
 
 					{keys.left && (
 						<group position={[1.0, 0, -2.5]}>
@@ -380,7 +345,6 @@ const Spaceship = forwardRef(
 							/>
 						</group>
 					)}
-
 
 					{keys.backward && (
 						<group position={[0, 0, -4]}>

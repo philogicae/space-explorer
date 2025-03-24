@@ -8,17 +8,11 @@ import Planet from '../celestial/Planet'
 import OrbitLine from '../celestial/OrbitLine'
 import AsteroidBelt from '../celestial/AsteroidBelt'
 
-// 1 AU = 1000 units
 const AU = 1000
-
-// Earth completes one orbit in 1 minute (60 seconds)
 const EARTH_ORBITAL_PERIOD = 60
 
-
 const SolarSystem = () => {
-
 	const { camera } = useThree()
-
 
 	useEffect(() => {
 		camera.far = 1000000
@@ -29,12 +23,11 @@ const SolarSystem = () => {
 		}
 		camera.updateProjectionMatrix()
 	}, [camera])
+
 	return (
 		<>
-
 			<Sun />
-
-
+			
 			<AsteroidBelt 
 				innerRadius={AU * 2.2}
 				outerRadius={AU * 3.2}
@@ -43,70 +36,69 @@ const SolarSystem = () => {
 				size={8}
 			/>
 
-
 			<OrbitLine
 				radius={AU * 0.39}
 				color='#d0cdc8'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={7.0}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 0.72}
 				color='#e6c99c'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={3.4}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 1.0}
 				color='#6b8cc7'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={0.0}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 1.52}
 				color='#da6e4b'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={1.8}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 5.2}
 				color='#e5c28f'
 				opacity={0.2}
 				lineWidth={0.4}
 				inclination={1.3}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 9.58}
 				color='#f5db6f'
 				opacity={0.2}
 				lineWidth={0.4}
 				inclination={2.5}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 19.22}
 				color='#7dcad9'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={0.8}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 30.05}
 				color='#5aa1df'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={1.8}
-			/>{' '}
+			/>
 			<OrbitLine
 				radius={AU * 39.5}
 				color='#dbd8cc'
 				opacity={0.2}
 				lineWidth={0.3}
 				inclination={17.0}
-			/>{' '}
+			/>
 
 			<Planet
 				name='Mercury'

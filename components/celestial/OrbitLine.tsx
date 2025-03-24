@@ -18,7 +18,6 @@ const OrbitLine = ({
   lineWidth?: number,
   inclination?: number
 }) => {
-
   const points = useMemo(() => {
     const pts = []
     const inclinationRad = (inclination * Math.PI) / 180
@@ -27,7 +26,6 @@ const OrbitLine = ({
       const angle = (i / segments) * Math.PI * 2
       const x = Math.cos(angle) * radius
       const z = Math.sin(angle) * radius
-      
 
       const y = z * Math.sin(inclinationRad)
       const newZ = z * Math.cos(inclinationRad)
@@ -37,13 +35,11 @@ const OrbitLine = ({
     return pts
   }, [radius, segments, inclination])
 
-
   const lineGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry()
     geometry.setFromPoints(points)
     return geometry
   }, [points])
-
 
   const line = useMemo(() => {
     const material = new THREE.LineBasicMaterial({
@@ -52,7 +48,6 @@ const OrbitLine = ({
       opacity: opacity,
       linewidth: lineWidth
     })
-    
 
     return new THREE.Line(lineGeometry, material)
   }, [lineGeometry, color, opacity, lineWidth])

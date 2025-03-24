@@ -12,33 +12,25 @@ interface CameraManagerProps {
   offset?: Vector3
 }
 
-
 export default function CameraManager({ 
   target, 
   offset = new Vector3(0, 50, 150) 
 }: CameraManagerProps) {
   const { camera } = useThree()
   const controls = useRef<OrbitControlsImpl>(null)
-  
-
   const lastTargetPos = useRef(new Vector3())
   const isInitialized = useRef(false)
-  
 
   useEffect(() => {
-
     const setupCamera = () => {
       if (!target.current || isInitialized.current) return
       
-
       const pos = target.current.position.clone()
       lastTargetPos.current.copy(pos)
       
-
       camera.position.copy(pos).add(offset)
       camera.lookAt(pos)
       
-      // Update orbit controls
       if (controls.current) {
         controls.current.target.copy(pos)
         controls.current.update()
@@ -46,7 +38,6 @@ export default function CameraManager({
       
       isInitialized.current = true
     }
-    
 
     if (target.current) {
       setupCamera()
@@ -61,46 +52,32 @@ export default function CameraManager({
       return () => clearInterval(checkInterval)
     }
   }, [camera, target, offset])
-  
 
   useEffect(() => {
-
     if (!isInitialized.current) return
-    
 
     const updateCamera = () => {
       if (!target.current) return
       
       const currentPos = target.current.position
-      
-
       const movement = new Vector3().subVectors(currentPos, lastTargetPos.current)
-      
 
       if (movement.length() > 0.001) {
-
         if (controls.current) {
           controls.current.target.add(movement)
         }
-        
-
         camera.position.add(movement)
-        
-
         lastTargetPos.current.copy(currentPos)
       }
     }
-    
 
     let frameId: number
     const animate = () => {
       updateCamera()
       frameId = requestAnimationFrame(animate)
     }
-    
 
     frameId = requestAnimationFrame(animate)
-    
 
     return () => {
       cancelAnimationFrame(frameId)

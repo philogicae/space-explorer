@@ -1,17 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useFrame } from '@react-three/fiber'
-
 
 const constellations = [
-  // Big Dipper (part of Ursa Major)
   {
     name: 'Big Dipper',
     stars: [
-
       { x: 0.5, y: 0.8, z: 0.2, brightness: 2.5, color: 0xA7D8FF },
       { x: 0.45, y: 0.78, z: 0.25, brightness: 2.3, color: 0xF9F5FF },
       { x: 0.4, y: 0.77, z: 0.3, brightness: 2.2, color: 0xD6EBFF },
@@ -24,7 +20,6 @@ const constellations = [
       [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]
     ]
   },
-
   {
     name: 'Orion',
     stars: [
@@ -40,7 +35,6 @@ const constellations = [
       [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0]
     ]
   },
-
   {
     name: 'Cassiopeia',
     stars: [
@@ -55,7 +49,6 @@ const constellations = [
     ]
   }
 ];
-
 
 const cachedGeometries = {
   tiny: new THREE.BufferGeometry(),
@@ -78,29 +71,24 @@ const cachedMaterials = {
   })
 };
 
-
 const Starfield = () => {
   const { scene } = useThree()
   const starsRef = useRef<THREE.Group | null>(null)
   const rotateSpeed = 0.00001
-  
 
   const backgroundStarData = useMemo(() => {
     const backgroundStarCount = 10000
     const radius = 8000
     const verticesTiny = []
     const verticesSmall = []
-    
 
     for (let i = 0; i < backgroundStarCount; i++) {
-
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
       
       const x = radius * Math.sin(phi) * Math.cos(theta)
       const y = radius * Math.sin(phi) * Math.sin(theta)
       const z = radius * Math.cos(phi)
-      
 
       if (Math.random() > 0.05) {
         verticesTiny.push(x, y, z)
@@ -113,43 +101,32 @@ const Starfield = () => {
   }, [])
   
   useEffect(() => {
-
     const starsGroup = new THREE.Group()
     const radius = 8000
-    
 
     cachedGeometries.tiny.setAttribute('position', 
       new THREE.Float32BufferAttribute(backgroundStarData.verticesTiny, 3))
     cachedGeometries.small.setAttribute('position', 
       new THREE.Float32BufferAttribute(backgroundStarData.verticesSmall, 3))
-    
 
     const tinyStars = new THREE.Points(cachedGeometries.tiny, cachedMaterials.tiny)
     const smallStars = new THREE.Points(cachedGeometries.small, cachedMaterials.small)
     starsGroup.add(tinyStars)
     starsGroup.add(smallStars)
-    
 
     for (const constellation of constellations) {
-
       const constellationGroup = new THREE.Group()
-      
-
       const starObjects: THREE.Mesh[] = []
-      
 
       for (const star of constellation.stars) {
-
         const material = new THREE.MeshBasicMaterial({ color: star.color })
         const starMesh = new THREE.Mesh(cachedGeometries.constellationSphere, material)
-        
 
         starMesh.scale.set(
           star.brightness * 0.3,
           star.brightness * 0.3,
           star.brightness * 0.3
         )
-        
 
         starMesh.position.set(
           star.x * radius * 0.5,
@@ -160,12 +137,10 @@ const Starfield = () => {
         constellationGroup.add(starMesh)
         starObjects.push(starMesh)
       }
-      
 
       for (const [startIdx, endIdx] of constellation.lines) {
         const startStar = starObjects[startIdx]
         const endStar = starObjects[endIdx]
-        
 
         const lineGeometry = new THREE.BufferGeometry()
         const lineVertices = [
@@ -174,10 +149,8 @@ const Starfield = () => {
         ]
         
         lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(lineVertices, 3))
-        
 
         let lineColor = 0x444466;
-        
 
         if (constellation.name === 'Big Dipper') {
           lineColor = 0x3A5A80;
@@ -200,16 +173,12 @@ const Starfield = () => {
       
       starsGroup.add(constellationGroup)
     }
-    
 
     scene.add(starsGroup)
     starsRef.current = starsGroup
-    
 
     return () => {
-
       scene.remove(starsGroup)
-      
 
       starsGroup.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -235,7 +204,6 @@ const Starfield = () => {
       })
     }
   }, [scene, backgroundStarData.verticesTiny, backgroundStarData.verticesSmall])
-  
 
   useFrame((_, delta) => {
     if (starsRef.current) {

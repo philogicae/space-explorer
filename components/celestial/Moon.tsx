@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Vector3 } from 'three'
 import type { Mesh } from 'three'
+
 const Moon = ({ 
   planetPosition, 
   orbitalRadius, 
@@ -11,7 +12,7 @@ const Moon = ({
   size, 
   color, 
   orbitalOffset = 0,
-  orbitalInclination = 5.0 // Most moons have some inclination relative to planet's equator 
+  orbitalInclination = 5.0
 }: { 
   planetPosition: Vector3, 
   orbitalRadius: number, 
@@ -30,20 +31,16 @@ const Moon = ({
     const angle = time * orbitalSpeed + orbitalOffset
     const inclinationRad = (orbitalInclination * Math.PI) / 180
     
-    // Calculate base orbital position
     const x = Math.cos(angle) * orbitalRadius
     const flatZ = Math.sin(angle) * orbitalRadius
     
-    // Apply orbital inclination
     const y = flatZ * Math.sin(inclinationRad)
     const z = flatZ * Math.cos(inclinationRad)
     
-    // Update moon position relative to its planet
     moonRef.current.position.x = planetPosition.x + x
     moonRef.current.position.y = planetPosition.y + y
     moonRef.current.position.z = planetPosition.z + z
     
-    // Add rotation to the moon
     moonRef.current.rotation.y += 0.01
   })
   

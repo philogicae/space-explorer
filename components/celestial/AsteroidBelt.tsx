@@ -20,48 +20,35 @@ const AsteroidBelt = ({
   size = 1
 }: AsteroidBeltProps) => {
   const groupRef = useRef<THREE.Group>(null)
-  
 
   const asteroids = useMemo(() => {
     const positions = []
     const sizes = []
-    
 
     for (let i = 0; i < count; i++) {
-
       const radius = innerRadius + (Math.random() ** 1.1) * (outerRadius - innerRadius)
-      
-
       const theta = Math.random() * Math.PI * 2
-      
-
       const inclination = (Math.random() - 0.5) * Math.PI / 8
-      
 
       const x = radius * Math.cos(theta)
       const z = radius * Math.sin(theta)
       const y = radius * Math.sin(inclination)
       
       positions.push(x, y, z)
-      
-
       sizes.push(Math.random() * 2 + 3 * size)
     }
     
     return { positions, sizes }
   }, [count, innerRadius, outerRadius, size])
-  
 
   useFrame(({ clock }) => {
     if (groupRef.current) {
-
       groupRef.current.rotation.y = clock.getElapsedTime() * 0.02
     }
   })
   
   return (
     <group ref={groupRef}>
-
       <points>
         <bufferGeometry>
           <bufferAttribute
@@ -88,8 +75,6 @@ const AsteroidBelt = ({
           depthWrite={false}
         />
       </points>
-      
-
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[innerRadius, outerRadius, 128]} />
         <meshBasicMaterial 

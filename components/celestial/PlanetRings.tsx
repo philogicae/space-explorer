@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
+
 const PlanetRings = ({ 
   size, 
   innerRadius, 

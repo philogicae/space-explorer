@@ -15,7 +15,6 @@ const Sun = () => {
 
   return (
     <group>
-
       <mesh ref={meshRef}>
         <sphereGeometry args={[45, 128, 128]} />
         <meshStandardMaterial
@@ -27,7 +26,6 @@ const Sun = () => {
           metalness={0.2}
         />
       </mesh>
-      
 
       <mesh>
         <sphereGeometry args={[48, 64, 64]} />
@@ -38,7 +36,6 @@ const Sun = () => {
           toneMapped={false}
         />
       </mesh>
-      
 
       <pointLight
         color="#ffffff"
@@ -46,7 +43,6 @@ const Sun = () => {
         distance={8000}
         decay={0.2}
       />
-      
 
       <pointLight
         color="#ffcc66"
@@ -54,7 +50,6 @@ const Sun = () => {
         distance={400}
         decay={0.6}
       />
-      
 
       <pointLight
         color="#ffffaa"
@@ -62,7 +57,6 @@ const Sun = () => {
         distance={300}
         decay={1.0}
       />
-      
 
       <hemisphereLight
         color="#ffffdd"
